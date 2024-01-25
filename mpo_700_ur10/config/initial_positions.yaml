@@ -1,0 +1,9 @@
+# Default initial positions for mpo_700's ros2_control fake system
+
+initial_positions:
+  ur10elbow_joint: 0
+  ur10shoulder_lift_joint: 0
+  ur10shoulder_pan_joint: 0
+  ur10wrist_1_joint: 0
+  ur10wrist_2_joint: 0
+  ur10wrist_3_joint: 0
