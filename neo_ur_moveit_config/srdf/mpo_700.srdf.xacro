@@ -3,37 +3,40 @@
     This is a format for representing semantic information about the robot structure.
     A URDF file must exist for this robot as well, where the joints and the links that are referenced are defined
 -->
-<robot name="mpo_700">
+<robot xmlns:xacro="http://www.ros.org/wiki/xacro" name="mpo_700">
+     <xacro:arg name="prefix" default=""/>
+     <xacro:property name="prefix_value" value="$(arg prefix)"/>
+
     <!--GROUPS: Representation of a set of joints and links. This can be useful for specifying DOF to plan for, defining arms, end effectors, etc-->
     <!--LINKS: When a link is specified, the parent joint of that link (if it exists) is automatically included-->
     <!--JOINTS: When a joint is specified, the child link of that joint (which will always exist) is automatically included-->
     <!--CHAINS: When a chain is specified, all the links along the chain (including endpoints) are included in the group. Additionally, all the joints that are parents to included links are also included. This means that joints along the chain and the parent joint of the base link are included in the group-->
     <!--SUBGROUPS: Groups can also be formed by referencing to already defined group names-->
-    <group name="arm">
-        <joint name="ur10wrist_1_joint"/>
-        <joint name="ur10wrist_2_joint"/>
-        <joint name="ur10wrist_3_joint"/>
-        <joint name="ur10shoulder_pan_joint"/>
-        <joint name="ur10shoulder_lift_joint"/>
-        <joint name="ur10elbow_joint"/>
-        <chain base_link="ur10base_link" tip_link="ur10tool0"/>
+    <group name="ur_manipulator">
+        <joint name="${prefix_value}wrist_1_joint"/>
+        <joint name="${prefix_value}wrist_2_joint"/>
+        <joint name="${prefix_value}wrist_3_joint"/>
+        <joint name="${prefix_value}shoulder_pan_joint"/>
+        <joint name="${prefix_value}shoulder_lift_joint"/>
+        <joint name="${prefix_value}elbow_joint"/>
+        <chain base_link="${prefix_value}base_link" tip_link="${prefix_value}tool0"/>
     </group>
     <!--GROUP STATES: Purpose: Define a named state for a particular group, in terms of joint values. This is useful to define states like 'folded arms'-->
-    <group_state name="test" group="arm">
-        <joint name="ur10elbow_joint" value="1.6489"/>
-        <joint name="ur10shoulder_lift_joint" value="-1.0761"/>
-        <joint name="ur10shoulder_pan_joint" value="0"/>
-        <joint name="ur10wrist_1_joint" value="-0.5901"/>
-        <joint name="ur10wrist_2_joint" value="0.1041"/>
-        <joint name="ur10wrist_3_joint" value="1.5621"/>
+    <group_state name="up" group="ur_manipulator">
+      <joint name="${prefix_value}elbow_joint" value="0" />
+      <joint name="${prefix_value}shoulder_lift_joint" value="-1.5707" />
+      <joint name="${prefix_value}shoulder_pan_joint" value="0" />
+      <joint name="${prefix_value}wrist_1_joint" value="-1.5707" />
+      <joint name="${prefix_value}wrist_2_joint" value="0" />
+      <joint name="${prefix_value}wrist_3_joint" value="0" />
     </group_state>
-    <group_state name="home" group="arm">
-        <joint name="ur10elbow_joint" value="2.4472"/>
-        <joint name="ur10shoulder_lift_joint" value="-1.215"/>
-        <joint name="ur10shoulder_pan_joint" value="-3.2283"/>
-        <joint name="ur10wrist_1_joint" value="0"/>
-        <joint name="ur10wrist_2_joint" value="0"/>
-        <joint name="ur10wrist_3_joint" value="0"/>
+    <group_state name="test_configuration" group="ur_manipulator">
+      <joint name="${prefix_value}elbow_joint" value="1.4" />
+      <joint name="${prefix_value}shoulder_lift_joint" value="-1.62" />
+      <joint name="${prefix_value}shoulder_pan_joint" value="1.54" />
+      <joint name="${prefix_value}wrist_1_joint" value="-1.2" />
+      <joint name="${prefix_value}wrist_2_joint" value="-1.6" />
+      <joint name="${prefix_value}wrist_3_joint" value="-0.11" />
     </group_state>
     <!--DISABLE COLLISIONS: By default it is assumed that any link of the robot could potentially come into collision with any other link in the robot. This tag disables collision checking between a specified pair of links. -->
     <disable_collisions link1="base_footprint" link2="cabinet_link" reason="Adjacent"/>
@@ -47,8 +50,8 @@
     <disable_collisions link1="base_footprint" link2="mpo_700_wheel_back_right_link" reason="Never"/>
     <disable_collisions link1="base_footprint" link2="mpo_700_wheel_front_left_link" reason="Never"/>
     <disable_collisions link1="base_footprint" link2="mpo_700_wheel_front_right_link" reason="Never"/>
-    <disable_collisions link1="base_footprint" link2="ur10base_link_inertia" reason="Never"/>
-    <disable_collisions link1="base_footprint" link2="ur10shoulder_link" reason="Never"/>
+    <disable_collisions link1="base_footprint" link2="${prefix_value}base_link_inertia" reason="Never"/>
+    <disable_collisions link1="base_footprint" link2="${prefix_value}shoulder_link" reason="Never"/>
     <disable_collisions link1="cabinet_link" link2="lidar_1_link" reason="Adjacent"/>
     <disable_collisions link1="cabinet_link" link2="lidar_2_link" reason="Adjacent"/>
     <disable_collisions link1="cabinet_link" link2="mpo_700_caster_back_left_link" reason="Never"/>
@@ -59,8 +62,8 @@
     <disable_collisions link1="cabinet_link" link2="mpo_700_wheel_back_right_link" reason="Never"/>
     <disable_collisions link1="cabinet_link" link2="mpo_700_wheel_front_left_link" reason="Never"/>
     <disable_collisions link1="cabinet_link" link2="mpo_700_wheel_front_right_link" reason="Never"/>
-    <disable_collisions link1="cabinet_link" link2="ur10base_link_inertia" reason="Adjacent"/>
-    <disable_collisions link1="cabinet_link" link2="ur10shoulder_link" reason="Never"/>
+    <disable_collisions link1="cabinet_link" link2="${prefix_value}base_link_inertia" reason="Adjacent"/>
+    <disable_collisions link1="cabinet_link" link2="${prefix_value}shoulder_link" reason="Never"/>
     <disable_collisions link1="lidar_1_link" link2="lidar_2_link" reason="Adjacent"/>
     <disable_collisions link1="lidar_1_link" link2="mpo_700_caster_back_left_link" reason="Never"/>
     <disable_collisions link1="lidar_1_link" link2="mpo_700_caster_back_right_link" reason="Never"/>
@@ -70,8 +73,8 @@
     <disable_collisions link1="lidar_1_link" link2="mpo_700_wheel_back_right_link" reason="Never"/>
     <disable_collisions link1="lidar_1_link" link2="mpo_700_wheel_front_left_link" reason="Never"/>
     <disable_collisions link1="lidar_1_link" link2="mpo_700_wheel_front_right_link" reason="Never"/>
-    <disable_collisions link1="lidar_1_link" link2="ur10base_link_inertia" reason="Never"/>
-    <disable_collisions link1="lidar_1_link" link2="ur10shoulder_link" reason="Never"/>
+    <disable_collisions link1="lidar_1_link" link2="${prefix_value}base_link_inertia" reason="Never"/>
+    <disable_collisions link1="lidar_1_link" link2="${prefix_value}shoulder_link" reason="Never"/>
     <disable_collisions link1="lidar_2_link" link2="mpo_700_caster_back_left_link" reason="Never"/>
     <disable_collisions link1="lidar_2_link" link2="mpo_700_caster_back_right_link" reason="Never"/>
     <disable_collisions link1="lidar_2_link" link2="mpo_700_caster_front_left_link" reason="Never"/>
@@ -80,9 +83,9 @@
     <disable_collisions link1="lidar_2_link" link2="mpo_700_wheel_back_right_link" reason="Never"/>
     <disable_collisions link1="lidar_2_link" link2="mpo_700_wheel_front_left_link" reason="Never"/>
     <disable_collisions link1="lidar_2_link" link2="mpo_700_wheel_front_right_link" reason="Never"/>
-    <disable_collisions link1="lidar_2_link" link2="ur10base_link_inertia" reason="Never"/>
-    <disable_collisions link1="lidar_2_link" link2="ur10shoulder_link" reason="Never"/>
-    <disable_collisions link1="lidar_2_link" link2="ur10upper_arm_link" reason="Never"/>
+    <disable_collisions link1="lidar_2_link" link2="${prefix_value}base_link_inertia" reason="Never"/>
+    <disable_collisions link1="lidar_2_link" link2="${prefix_value}shoulder_link" reason="Never"/>
+    <disable_collisions link1="lidar_2_link" link2="${prefix_value}upper_arm_link" reason="Never"/>
     <disable_collisions link1="mpo_700_caster_back_left_link" link2="mpo_700_caster_back_right_link" reason="Never"/>
     <disable_collisions link1="mpo_700_caster_back_left_link" link2="mpo_700_caster_front_left_link" reason="Never"/>
     <disable_collisions link1="mpo_700_caster_back_left_link" link2="mpo_700_caster_front_right_link" reason="Never"/>
@@ -90,61 +93,61 @@
     <disable_collisions link1="mpo_700_caster_back_left_link" link2="mpo_700_wheel_back_right_link" reason="Never"/>
     <disable_collisions link1="mpo_700_caster_back_left_link" link2="mpo_700_wheel_front_left_link" reason="Never"/>
     <disable_collisions link1="mpo_700_caster_back_left_link" link2="mpo_700_wheel_front_right_link" reason="Never"/>
-    <disable_collisions link1="mpo_700_caster_back_left_link" link2="ur10base_link_inertia" reason="Never"/>
-    <disable_collisions link1="mpo_700_caster_back_left_link" link2="ur10shoulder_link" reason="Never"/>
-    <disable_collisions link1="mpo_700_caster_back_left_link" link2="ur10upper_arm_link" reason="Never"/>
+    <disable_collisions link1="mpo_700_caster_back_left_link" link2="${prefix_value}base_link_inertia" reason="Never"/>
+    <disable_collisions link1="mpo_700_caster_back_left_link" link2="${prefix_value}shoulder_link" reason="Never"/>
+    <disable_collisions link1="mpo_700_caster_back_left_link" link2="${prefix_value}upper_arm_link" reason="Never"/>
     <disable_collisions link1="mpo_700_caster_back_right_link" link2="mpo_700_caster_front_left_link" reason="Never"/>
     <disable_collisions link1="mpo_700_caster_back_right_link" link2="mpo_700_caster_front_right_link" reason="Never"/>
     <disable_collisions link1="mpo_700_caster_back_right_link" link2="mpo_700_wheel_back_left_link" reason="Never"/>
     <disable_collisions link1="mpo_700_caster_back_right_link" link2="mpo_700_wheel_back_right_link" reason="Adjacent"/>
     <disable_collisions link1="mpo_700_caster_back_right_link" link2="mpo_700_wheel_front_left_link" reason="Never"/>
     <disable_collisions link1="mpo_700_caster_back_right_link" link2="mpo_700_wheel_front_right_link" reason="Never"/>
-    <disable_collisions link1="mpo_700_caster_back_right_link" link2="ur10base_link_inertia" reason="Never"/>
-    <disable_collisions link1="mpo_700_caster_back_right_link" link2="ur10shoulder_link" reason="Never"/>
-    <disable_collisions link1="mpo_700_caster_back_right_link" link2="ur10upper_arm_link" reason="Never"/>
+    <disable_collisions link1="mpo_700_caster_back_right_link" link2="${prefix_value}base_link_inertia" reason="Never"/>
+    <disable_collisions link1="mpo_700_caster_back_right_link" link2="${prefix_value}shoulder_link" reason="Never"/>
+    <disable_collisions link1="mpo_700_caster_back_right_link" link2="${prefix_value}upper_arm_link" reason="Never"/>
     <disable_collisions link1="mpo_700_caster_front_left_link" link2="mpo_700_caster_front_right_link" reason="Never"/>
     <disable_collisions link1="mpo_700_caster_front_left_link" link2="mpo_700_wheel_back_left_link" reason="Never"/>
     <disable_collisions link1="mpo_700_caster_front_left_link" link2="mpo_700_wheel_back_right_link" reason="Never"/>
     <disable_collisions link1="mpo_700_caster_front_left_link" link2="mpo_700_wheel_front_left_link" reason="Adjacent"/>
     <disable_collisions link1="mpo_700_caster_front_left_link" link2="mpo_700_wheel_front_right_link" reason="Never"/>
-    <disable_collisions link1="mpo_700_caster_front_left_link" link2="ur10base_link_inertia" reason="Never"/>
-    <disable_collisions link1="mpo_700_caster_front_left_link" link2="ur10shoulder_link" reason="Never"/>
+    <disable_collisions link1="mpo_700_caster_front_left_link" link2="${prefix_value}base_link_inertia" reason="Never"/>
+    <disable_collisions link1="mpo_700_caster_front_left_link" link2="${prefix_value}shoulder_link" reason="Never"/>
     <disable_collisions link1="mpo_700_caster_front_right_link" link2="mpo_700_wheel_back_left_link" reason="Never"/>
     <disable_collisions link1="mpo_700_caster_front_right_link" link2="mpo_700_wheel_back_right_link" reason="Never"/>
     <disable_collisions link1="mpo_700_caster_front_right_link" link2="mpo_700_wheel_front_left_link" reason="Never"/>
     <disable_collisions link1="mpo_700_caster_front_right_link" link2="mpo_700_wheel_front_right_link" reason="Adjacent"/>
-    <disable_collisions link1="mpo_700_caster_front_right_link" link2="ur10base_link_inertia" reason="Never"/>
-    <disable_collisions link1="mpo_700_caster_front_right_link" link2="ur10shoulder_link" reason="Never"/>
+    <disable_collisions link1="mpo_700_caster_front_right_link" link2="${prefix_value}base_link_inertia" reason="Never"/>
+    <disable_collisions link1="mpo_700_caster_front_right_link" link2="${prefix_value}shoulder_link" reason="Never"/>
     <disable_collisions link1="mpo_700_wheel_back_left_link" link2="mpo_700_wheel_back_right_link" reason="Never"/>
     <disable_collisions link1="mpo_700_wheel_back_left_link" link2="mpo_700_wheel_front_left_link" reason="Never"/>
     <disable_collisions link1="mpo_700_wheel_back_left_link" link2="mpo_700_wheel_front_right_link" reason="Never"/>
-    <disable_collisions link1="mpo_700_wheel_back_left_link" link2="ur10base_link_inertia" reason="Never"/>
-    <disable_collisions link1="mpo_700_wheel_back_left_link" link2="ur10shoulder_link" reason="Never"/>
-    <disable_collisions link1="mpo_700_wheel_back_left_link" link2="ur10upper_arm_link" reason="Never"/>
+    <disable_collisions link1="mpo_700_wheel_back_left_link" link2="${prefix_value}base_link_inertia" reason="Never"/>
+    <disable_collisions link1="mpo_700_wheel_back_left_link" link2="${prefix_value}shoulder_link" reason="Never"/>
+    <disable_collisions link1="mpo_700_wheel_back_left_link" link2="${prefix_value}upper_arm_link" reason="Never"/>
     <disable_collisions link1="mpo_700_wheel_back_right_link" link2="mpo_700_wheel_front_left_link" reason="Never"/>
     <disable_collisions link1="mpo_700_wheel_back_right_link" link2="mpo_700_wheel_front_right_link" reason="Never"/>
-    <disable_collisions link1="mpo_700_wheel_back_right_link" link2="ur10base_link_inertia" reason="Never"/>
-    <disable_collisions link1="mpo_700_wheel_back_right_link" link2="ur10shoulder_link" reason="Never"/>
-    <disable_collisions link1="mpo_700_wheel_back_right_link" link2="ur10upper_arm_link" reason="Never"/>
+    <disable_collisions link1="mpo_700_wheel_back_right_link" link2="${prefix_value}base_link_inertia" reason="Never"/>
+    <disable_collisions link1="mpo_700_wheel_back_right_link" link2="${prefix_value}shoulder_link" reason="Never"/>
+    <disable_collisions link1="mpo_700_wheel_back_right_link" link2="${prefix_value}upper_arm_link" reason="Never"/>
     <disable_collisions link1="mpo_700_wheel_front_left_link" link2="mpo_700_wheel_front_right_link" reason="Never"/>
-    <disable_collisions link1="mpo_700_wheel_front_left_link" link2="ur10base_link_inertia" reason="Never"/>
-    <disable_collisions link1="mpo_700_wheel_front_left_link" link2="ur10shoulder_link" reason="Never"/>
-    <disable_collisions link1="mpo_700_wheel_front_left_link" link2="ur10upper_arm_link" reason="Never"/>
-    <disable_collisions link1="mpo_700_wheel_front_right_link" link2="ur10base_link_inertia" reason="Never"/>
-    <disable_collisions link1="mpo_700_wheel_front_right_link" link2="ur10shoulder_link" reason="Never"/>
-    <disable_collisions link1="mpo_700_wheel_front_right_link" link2="ur10upper_arm_link" reason="Never"/>
-    <disable_collisions link1="ur10base_link_inertia" link2="ur10shoulder_link" reason="Adjacent"/>
-    <disable_collisions link1="ur10base_link_inertia" link2="ur10upper_arm_link" reason="Never"/>
-    <disable_collisions link1="ur10base_link_inertia" link2="ur10wrist_1_link" reason="Never"/>
-    <disable_collisions link1="ur10forearm_link" link2="ur10upper_arm_link" reason="Adjacent"/>
-    <disable_collisions link1="ur10forearm_link" link2="ur10wrist_1_link" reason="Adjacent"/>
-    <disable_collisions link1="ur10shoulder_link" link2="ur10upper_arm_link" reason="Adjacent"/>
-    <disable_collisions link1="ur10shoulder_link" link2="ur10wrist_1_link" reason="Never"/>
-    <disable_collisions link1="ur10shoulder_link" link2="ur10wrist_2_link" reason="Never"/>
-    <disable_collisions link1="ur10wrist_1_link" link2="ur10wrist_2_link" reason="Adjacent"/>
-    <disable_collisions link1="ur10wrist_1_link" link2="ur10wrist_3_link" reason="Never"/>
-    <disable_collisions link1="ur10wrist_2_link" link2="ur10wrist_3_link" reason="Adjacent"/>
-    <disable_collisions link1="ur10tool0" link2="ur10wrist_1_link" reason="Never" />
-    <disable_collisions link1="ur10tool0" link2="ur10wrist_2_link" reason="Never" />
-    <disable_collisions link1="ur10tool0" link2="ur10wrist_3_link" reason="Adjacent" />
+    <disable_collisions link1="mpo_700_wheel_front_left_link" link2="${prefix_value}base_link_inertia" reason="Never"/>
+    <disable_collisions link1="mpo_700_wheel_front_left_link" link2="${prefix_value}shoulder_link" reason="Never"/>
+    <disable_collisions link1="mpo_700_wheel_front_left_link" link2="${prefix_value}upper_arm_link" reason="Never"/>
+    <disable_collisions link1="mpo_700_wheel_front_right_link" link2="${prefix_value}base_link_inertia" reason="Never"/>
+    <disable_collisions link1="mpo_700_wheel_front_right_link" link2="${prefix_value}shoulder_link" reason="Never"/>
+    <disable_collisions link1="mpo_700_wheel_front_right_link" link2="${prefix_value}upper_arm_link" reason="Never"/>
+    <disable_collisions link1="${prefix_value}base_link_inertia" link2="${prefix_value}shoulder_link" reason="Adjacent"/>
+    <disable_collisions link1="${prefix_value}base_link_inertia" link2="${prefix_value}upper_arm_link" reason="Never"/>
+    <disable_collisions link1="${prefix_value}base_link_inertia" link2="${prefix_value}wrist_1_link" reason="Never"/>
+    <disable_collisions link1="${prefix_value}forearm_link" link2="${prefix_value}upper_arm_link" reason="Adjacent"/>
+    <disable_collisions link1="${prefix_value}forearm_link" link2="${prefix_value}wrist_1_link" reason="Adjacent"/>
+    <disable_collisions link1="${prefix_value}shoulder_link" link2="${prefix_value}upper_arm_link" reason="Adjacent"/>
+    <disable_collisions link1="${prefix_value}shoulder_link" link2="${prefix_value}wrist_1_link" reason="Never"/>
+    <disable_collisions link1="${prefix_value}shoulder_link" link2="${prefix_value}wrist_2_link" reason="Never"/>
+    <disable_collisions link1="${prefix_value}wrist_1_link" link2="${prefix_value}wrist_2_link" reason="Adjacent"/>
+    <disable_collisions link1="${prefix_value}wrist_1_link" link2="${prefix_value}wrist_3_link" reason="Never"/>
+    <disable_collisions link1="${prefix_value}wrist_2_link" link2="${prefix_value}wrist_3_link" reason="Adjacent"/>
+    <disable_collisions link1="${prefix_value}tool0" link2="${prefix_value}wrist_1_link" reason="Never" />
+    <disable_collisions link1="${prefix_value}tool0" link2="${prefix_value}wrist_2_link" reason="Never" />
+    <disable_collisions link1="${prefix_value}tool0" link2="${prefix_value}wrist_3_link" reason="Adjacent" />
 </robot>
