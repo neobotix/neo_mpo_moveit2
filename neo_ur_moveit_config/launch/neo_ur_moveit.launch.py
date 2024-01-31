@@ -39,18 +39,9 @@ from launch.substitutions import Command, FindExecutable, LaunchConfiguration, P
 from launch_ros.actions import Node
 from launch_ros.substitutions import FindPackageShare
 from ament_index_python.packages import get_package_share_directory
+from launch_ros.descriptions import ParameterValue
 
 from neo_ur_moveit_config.launch_common import load_yaml
-
-def load_file(package_name, file_path):
-    package_path = get_package_share_directory(package_name)
-    absolute_file_path = os.path.join(package_path, file_path)
-
-    try:
-        with open(absolute_file_path, "r") as file:
-            return file.read()
-    except EnvironmentError:  # parent of IOError, OSError *and* WindowsError where available
-        return None
 
 def launch_setup(context, *args, **kwargs):
 
@@ -69,7 +60,6 @@ def launch_setup(context, *args, **kwargs):
     prefix = LaunchConfiguration("prefix")
     use_sim_time = LaunchConfiguration("use_sim_time")
     launch_rviz = LaunchConfiguration("launch_rviz")
-    launch_servo = LaunchConfiguration("launch_servo")
 
     joint_limit_params = PathJoinSubstitution(
         [FindPackageShare(description_package), "config", ur_type, "joint_limits.yaml"]
@@ -96,9 +86,16 @@ def launch_setup(context, *args, **kwargs):
     robot_description = {"robot_description": robot_description_content}
 
     # MoveIt Configuration
-    robot_description_semantic_content = load_file(
-        "neo_ur_moveit_config", "srdf/mpo_700.srdf"
-    )
+    srdf = os.path.join(get_package_share_directory('neo_ur_moveit_config'),
+        'srdf',
+        'mpo_700.srdf.xacro')
+
+    robot_description_semantic_content = ParameterValue(
+        Command([
+            "xacro", " ", srdf, " ", 'prefix:=',
+            prefix,
+            ]),
+        value_type=str)
 
     robot_description_semantic = {"robot_description_semantic": robot_description_semantic_content} 
 
@@ -148,11 +145,6 @@ def launch_setup(context, *args, **kwargs):
         "publish_transforms_updates": True,
     }
 
-    warehouse_ros_config = {
-        "warehouse_plugin": "warehouse_ros_sqlite::DatabaseConnection",
-        "warehouse_host": warehouse_sqlite_path,
-    }
-
     # Start the actual move_group node/action server
     move_group_node = Node(
         package="moveit_ros_move_group",
@@ -168,7 +160,6 @@ def launch_setup(context, *args, **kwargs):
             moveit_controllers,
             planning_scene_monitor_parameters,
             {"use_sim_time": use_sim_time},
-            warehouse_ros_config,
         ],
     )
 
@@ -189,7 +180,6 @@ def launch_setup(context, *args, **kwargs):
             ompl_planning_pipeline_config,
             robot_description_kinematics,
             # robot_description_planning,
-            warehouse_ros_config,
         ],
     )
 
