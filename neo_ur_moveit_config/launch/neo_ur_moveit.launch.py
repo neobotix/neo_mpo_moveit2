@@ -47,10 +47,12 @@ def launch_setup(context, *args, **kwargs):
 
     # Initialize Arguments
     ur_type = LaunchConfiguration("ur_type")
+    neo_robot_type = LaunchConfiguration("neo_robot_type")
     use_fake_hardware = LaunchConfiguration("use_fake_hardware")
     safety_limits = LaunchConfiguration("safety_limits")
     safety_pos_margin = LaunchConfiguration("safety_pos_margin")
     safety_k_position = LaunchConfiguration("safety_k_position")
+
     # General arguments
     description_package = LaunchConfiguration("description_package")
     description_file = LaunchConfiguration("description_file")
@@ -74,21 +76,25 @@ def launch_setup(context, *args, **kwargs):
         [FindPackageShare(description_package), "config", ur_type, "visual_parameters.yaml"]
     )
 
-    urdf = os.path.join(get_package_share_directory('neo_mpo_700-2'),
-        'robot_model/mpo_700',
-        'mpo_700.urdf.xacro')
+    urdf = os.path.join(get_package_share_directory(description_package.perform(context)),
+        'robots', 
+        neo_robot_type.perform(context), 
+        neo_robot_type.perform(context) +'.urdf.xacro')
    
     robot_description_content = Command([
-            "xacro", " ", urdf, " ", 'arm_type:=',
-            ur_type,
-            ])
+        "xacro", " ", urdf, " ", 
+        'arm_type:=', ur_type, " ",
+        'use_gazebo:=', 'true', " ", 
+        'robot_prefix:=', neo_robot_type,
+        ])
 
     robot_description = {"robot_description": robot_description_content}
 
     # MoveIt Configuration
-    srdf = os.path.join(get_package_share_directory('neo_ur_moveit_config'),
+    srdf = os.path.join(get_package_share_directory(moveit_config_package.perform(context)),
         'srdf',
-        'mpo_700.srdf.xacro')
+        neo_robot_type.perform(context)+'.srdf.xacro'
+    )
 
     robot_description_semantic_content = ParameterValue(
         Command([
@@ -115,11 +121,11 @@ def launch_setup(context, *args, **kwargs):
             "start_state_max_bounds_error": 0.1,
         }
     }
-    ompl_planning_yaml = load_yaml("neo_ur_moveit_config", "config/ompl_planning.yaml")
+    ompl_planning_yaml = load_yaml(moveit_config_package.perform(context), "config/ompl_planning.yaml")
     ompl_planning_pipeline_config["move_group"].update(ompl_planning_yaml)
 
     # Trajectory Execution Configuration
-    controllers_yaml = load_yaml("neo_ur_moveit_config", "config/" + ur_type.perform(context) + "_controllers.yaml")
+    controllers_yaml = load_yaml(moveit_config_package.perform(context), "config/" + ur_type.perform(context) + "_controllers.yaml")
 
     # the scaled_joint_trajectory_controller does not work on fake hardware
     change_controllers = context.perform_substitution(use_fake_hardware)
@@ -198,6 +204,13 @@ def generate_launch_description():
             "ur_type",
             description="Type/series of used UR robot.",
             choices=["ur3", "ur3e", "ur5", "ur5e", "ur10", "ur10e", "ur16e", "ur20"],
+        )
+    )
+    declared_arguments.append(
+        DeclareLaunchArgument(
+            'neo_robot_type', 
+            default_value='mpo_700',
+            description='Neobotix Robot Types: "mpo_700", "mpo_500", "mp_400", "mp_500"'
         )
     )
     declared_arguments.append(
