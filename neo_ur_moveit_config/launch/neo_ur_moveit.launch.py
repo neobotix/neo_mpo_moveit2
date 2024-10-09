@@ -47,7 +47,7 @@ def launch_setup(context, *args, **kwargs):
 
     # Initialize Arguments
     ur_type = LaunchConfiguration("ur_type")
-    neo_robot_type = LaunchConfiguration("neo_robot_type")
+    my_robot = LaunchConfiguration("my_robot")
     use_fake_hardware = LaunchConfiguration("use_fake_hardware")
     safety_limits = LaunchConfiguration("safety_limits")
     safety_pos_margin = LaunchConfiguration("safety_pos_margin")
@@ -56,6 +56,7 @@ def launch_setup(context, *args, **kwargs):
     # General arguments
     description_package = LaunchConfiguration("description_package")
     description_file = LaunchConfiguration("description_file")
+    moveit_joint_limits_file = LaunchConfiguration("moveit_joint_limits_file")
     moveit_config_package = LaunchConfiguration("moveit_config_package")
     moveit_config_file = LaunchConfiguration("moveit_config_file")
     warehouse_sqlite_path = LaunchConfiguration("warehouse_sqlite_path")
@@ -76,24 +77,24 @@ def launch_setup(context, *args, **kwargs):
         [FindPackageShare(description_package), "config", ur_type, "visual_parameters.yaml"]
     )
 
-    urdf = os.path.join(get_package_share_directory(description_package.perform(context)),
+    urdf = os.path.join(get_package_share_directory(str(description_package.perform(context))),
         'robots', 
-        neo_robot_type.perform(context), 
-        neo_robot_type.perform(context) +'.urdf.xacro')
-   
+        str(my_robot.perform(context)), 
+        str(my_robot.perform(context)) + '.urdf.xacro')
+
     robot_description_content = Command([
         "xacro", " ", urdf, " ", 
         'arm_type:=', ur_type, " ",
         'use_gazebo:=', 'true', " ", 
-        'robot_prefix:=', neo_robot_type,
+        'robot_prefix:=', my_robot,
         ])
 
     robot_description = {"robot_description": robot_description_content}
 
     # MoveIt Configuration
-    srdf = os.path.join(get_package_share_directory(moveit_config_package.perform(context)),
+    srdf = os.path.join(get_package_share_directory(str(moveit_config_package.perform(context))),
         'srdf',
-        neo_robot_type.perform(context)+'.srdf.xacro'
+        str(my_robot.perform(context)) + '.srdf.xacro'
     )
 
     robot_description_semantic_content = ParameterValue(
@@ -109,9 +110,14 @@ def launch_setup(context, *args, **kwargs):
         [FindPackageShare(moveit_config_package), "config", "kinematics.yaml"]
     )
 
-    # robot_description_planning = {
-    # "robot_description_planning": load_yaml_abs(str(joint_limit_params.perform(context)))
-    # }
+    robot_description_planning = {
+        "robot_description_planning": load_yaml(
+            str(moveit_config_package.perform(context)),
+            os.path.join("config", 
+                        str(ur_type.perform(context)),
+                        str(moveit_joint_limits_file.perform(context))),
+        )
+    }
 
     # Planning Configuration
     ompl_planning_pipeline_config = {
@@ -121,12 +127,16 @@ def launch_setup(context, *args, **kwargs):
             "start_state_max_bounds_error": 0.1,
         }
     }
-    ompl_planning_yaml = load_yaml(moveit_config_package.perform(context), "config/ompl_planning.yaml")
+    ompl_planning_yaml = load_yaml(str(moveit_config_package.perform(context)), "config/ompl_planning.yaml")
     ompl_planning_pipeline_config["move_group"].update(ompl_planning_yaml)
 
     # Trajectory Execution Configuration
-    controllers_yaml = load_yaml(moveit_config_package.perform(context), "config/" + ur_type.perform(context) + "_controllers.yaml")
-
+    controllers_yaml = load_yaml(
+        str(moveit_config_package.perform(context)),
+        os.path.join("config",
+                    str(ur_type.perform(context)),
+                    "controllers.yaml")
+    )
     # the scaled_joint_trajectory_controller does not work on fake hardware
     change_controllers = context.perform_substitution(use_fake_hardware)
     if change_controllers == "true":
@@ -161,7 +171,7 @@ def launch_setup(context, *args, **kwargs):
             robot_description,
             robot_description_semantic,
             robot_description_kinematics,
-            # robot_description_planning,
+            robot_description_planning,
             ompl_planning_pipeline_config,
             trajectory_execution,
             moveit_controllers,
@@ -208,7 +218,7 @@ def generate_launch_description():
     )
     declared_arguments.append(
         DeclareLaunchArgument(
-            'neo_robot_type', 
+            'my_robot', 
             default_value='mpo_700',
             description='Neobotix Robot Types: "mpo_700", "mpo_500", "mp_400", "mp_500"'
         )
@@ -270,6 +280,13 @@ def generate_launch_description():
             "moveit_config_file",
             default_value="ur.srdf.xacro",
             description="MoveIt SRDF/XACRO description file with the robot.",
+        )
+    )
+    declared_arguments.append(
+        DeclareLaunchArgument(
+            "moveit_joint_limits_file",
+            default_value="joint_limits.yaml",
+            description="MoveIt joint limits that augment or override the values from the URDF robot_description.",
         )
     )
     declared_arguments.append(
