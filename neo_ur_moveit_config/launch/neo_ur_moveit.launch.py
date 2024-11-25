@@ -144,7 +144,6 @@ def launch_setup(context, *args, **kwargs):
     controllers_yaml = os.path.join(
         get_package_share_directory(str(moveit_config_package.perform(context))),
         "config",
-        # str(ur_type.perform(context)),
         "controllers.yaml",
     )
 
@@ -240,7 +239,7 @@ def generate_launch_description():
         DeclareLaunchArgument(
             'my_robot', 
             default_value='mpo_700',
-            description='Neobotix Robot Types: "mpo_700", "mpo_500", "mp_400", "mp_500"'
+            description='Neobotix Robot Types: "mpo_700", "mpo_500"'
         )
     )
     declared_arguments.append(
@@ -340,3 +339,4 @@ def generate_launch_description():
     )
 
     return LaunchDescription(declared_arguments + [OpaqueFunction(function=launch_setup)])
+
