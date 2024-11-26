@@ -39,7 +39,7 @@ from launch.substitutions import Command, FindExecutable, LaunchConfiguration, P
 from launch_ros.actions import Node
 from launch_ros.substitutions import FindPackageShare
 from ament_index_python.packages import get_package_share_directory
-from launch_ros.descriptions import ParameterValue
+from launch_ros.descriptions import ParameterValue, ParameterFile
 
 from neo_ur_moveit_config.launch_common import load_yaml
 
@@ -47,13 +47,16 @@ def launch_setup(context, *args, **kwargs):
 
     # Initialize Arguments
     ur_type = LaunchConfiguration("ur_type")
+    my_robot = LaunchConfiguration("my_robot")
     use_fake_hardware = LaunchConfiguration("use_fake_hardware")
     safety_limits = LaunchConfiguration("safety_limits")
     safety_pos_margin = LaunchConfiguration("safety_pos_margin")
     safety_k_position = LaunchConfiguration("safety_k_position")
+
     # General arguments
     description_package = LaunchConfiguration("description_package")
     description_file = LaunchConfiguration("description_file")
+    moveit_joint_limits_file = LaunchConfiguration("moveit_joint_limits_file")
     moveit_config_package = LaunchConfiguration("moveit_config_package")
     moveit_config_file = LaunchConfiguration("moveit_config_file")
     warehouse_sqlite_path = LaunchConfiguration("warehouse_sqlite_path")
@@ -74,21 +77,25 @@ def launch_setup(context, *args, **kwargs):
         [FindPackageShare(description_package), "config", ur_type, "visual_parameters.yaml"]
     )
 
-    urdf = os.path.join(get_package_share_directory('neo_mpo_700-2'),
-        'robot_model/mpo_700',
-        'mpo_700.urdf.xacro')
-   
+    urdf = os.path.join(get_package_share_directory(str(description_package.perform(context))),
+        'robots', 
+        str(my_robot.perform(context)), 
+        str(my_robot.perform(context)) + '.urdf.xacro')
+
     robot_description_content = Command([
-            "xacro", " ", urdf, " ", 'arm_type:=',
-            ur_type,
-            ])
+        "xacro", " ", urdf, " ", 
+        'arm_type:=', ur_type, " ",
+        'use_gazebo:=', 'true', " ", 
+        'robot_prefix:=', my_robot,
+        ])
 
     robot_description = {"robot_description": robot_description_content}
 
     # MoveIt Configuration
-    srdf = os.path.join(get_package_share_directory('neo_ur_moveit_config'),
+    srdf = os.path.join(get_package_share_directory(str(moveit_config_package.perform(context))),
         'srdf',
-        'mpo_700.srdf.xacro')
+        str(my_robot.perform(context)) + '.srdf.xacro'
+    )
 
     robot_description_semantic_content = ParameterValue(
         Command([
@@ -102,10 +109,23 @@ def launch_setup(context, *args, **kwargs):
     robot_description_kinematics = PathJoinSubstitution(
         [FindPackageShare(moveit_config_package), "config", "kinematics.yaml"]
     )
+    joint_limits_yaml =os.path.join(
+        get_package_share_directory(str(moveit_config_package.perform(context))),
+        "config",
+        str(moveit_joint_limits_file.perform(context))
+    )
 
-    # robot_description_planning = {
-    # "robot_description_planning": load_yaml_abs(str(joint_limit_params.perform(context)))
-    # }
+    joint_limits_yaml_with_substitutions = ParameterFile(joint_limits_yaml, allow_substs=True)
+    # Evaluate the parameter file to apply dynamic substitutions
+    joint_limits_yaml_with_substitutions.evaluate(context)
+    # Load the YAML file with the applied substitutions
+    robot_description_planning = {
+        "robot_description_planning": load_yaml(
+            str(moveit_config_package.perform(context)),
+            os.path.join("config", 
+                        str(joint_limits_yaml_with_substitutions.param_file))
+        )
+    }
 
     # Planning Configuration
     ompl_planning_pipeline_config = {
@@ -115,20 +135,33 @@ def launch_setup(context, *args, **kwargs):
             "start_state_max_bounds_error": 0.1,
         }
     }
-    ompl_planning_yaml = load_yaml("neo_ur_moveit_config", "config/ompl_planning.yaml")
+    ompl_planning_yaml = load_yaml(str(moveit_config_package.perform(context)), "config/ompl_planning.yaml")
     ompl_planning_pipeline_config["move_group"].update(ompl_planning_yaml)
 
     # Trajectory Execution Configuration
-    controllers_yaml = load_yaml("neo_ur_moveit_config", "config/" + ur_type.perform(context) + "_controllers.yaml")
+    controllers_yaml = os.path.join(
+        get_package_share_directory(str(moveit_config_package.perform(context))),
+        "config",
+        "controllers.yaml",
+    )
 
+    controllers_yaml_with_substitutions = ParameterFile(controllers_yaml, allow_substs=True)
+    # Evaluate the parameter file to apply dynamic substitutions
+    controllers_yaml_with_substitutions.evaluate(context)
+    # Load the YAML file with the applied substitutions    
+    controllers_yaml_with_substitutions = load_yaml(
+        str(moveit_config_package.perform(context)),
+        os.path.join("config", 
+                    str(controllers_yaml_with_substitutions.param_file)),
+    )
     # the scaled_joint_trajectory_controller does not work on fake hardware
     change_controllers = context.perform_substitution(use_fake_hardware)
     if change_controllers == "true":
-        controllers_yaml["scaled_joint_trajectory_controller"]["default"] = False
-        controllers_yaml["joint_trajectory_controller"]["default"] = True
+        controllers_yaml_with_substitutions["scaled_joint_trajectory_controller"]["default"] = False
+        controllers_yaml_with_substitutions["joint_trajectory_controller"]["default"] = True
 
     moveit_controllers = {
-        "moveit_simple_controller_manager": controllers_yaml,
+        "moveit_simple_controller_manager": controllers_yaml_with_substitutions,
         "moveit_controller_manager": "moveit_simple_controller_manager/MoveItSimpleControllerManager",
     }
 
@@ -155,7 +188,7 @@ def launch_setup(context, *args, **kwargs):
             robot_description,
             robot_description_semantic,
             robot_description_kinematics,
-            # robot_description_planning,
+            robot_description_planning,
             ompl_planning_pipeline_config,
             trajectory_execution,
             moveit_controllers,
@@ -198,6 +231,13 @@ def generate_launch_description():
             "ur_type",
             description="Type/series of used UR robot.",
             choices=["ur3", "ur3e", "ur5", "ur5e", "ur10", "ur10e", "ur16e", "ur20"],
+        )
+    )
+    declared_arguments.append(
+        DeclareLaunchArgument(
+            'my_robot', 
+            default_value='mpo_700',
+            description='Neobotix Robot Types: "mpo_700", "mpo_500"'
         )
     )
     declared_arguments.append(
@@ -261,6 +301,13 @@ def generate_launch_description():
     )
     declared_arguments.append(
         DeclareLaunchArgument(
+            "moveit_joint_limits_file",
+            default_value="joint_limits.yaml",
+            description="MoveIt joint limits that augment or override the values from the URDF robot_description.",
+        )
+    )
+    declared_arguments.append(
+        DeclareLaunchArgument(
             "warehouse_sqlite_path",
             default_value=os.path.expanduser("~/.ros/warehouse_ros.sqlite"),
             description="Path where the warehouse database should be stored",
@@ -290,3 +337,4 @@ def generate_launch_description():
     )
 
     return LaunchDescription(declared_arguments + [OpaqueFunction(function=launch_setup)])
+
