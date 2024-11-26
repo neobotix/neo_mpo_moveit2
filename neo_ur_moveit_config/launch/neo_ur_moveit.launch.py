@@ -112,8 +112,7 @@ def launch_setup(context, *args, **kwargs):
     joint_limits_yaml =os.path.join(
         get_package_share_directory(str(moveit_config_package.perform(context))),
         "config",
-        str(ur_type.perform(context)),
-        str(moveit_joint_limits_file.perform(context)),
+        str(moveit_joint_limits_file.perform(context))
     )
 
     joint_limits_yaml_with_substitutions = ParameterFile(joint_limits_yaml, allow_substs=True)
@@ -124,8 +123,7 @@ def launch_setup(context, *args, **kwargs):
         "robot_description_planning": load_yaml(
             str(moveit_config_package.perform(context)),
             os.path.join("config", 
-                        str(ur_type.perform(context)),
-                        str(joint_limits_yaml_with_substitutions.param_file)),
+                        str(joint_limits_yaml_with_substitutions.param_file))
         )
     }
 
