@@ -38,20 +38,24 @@
       <joint name="${prefix_value}wrist_2_joint" value="-1.6" />
       <joint name="${prefix_value}wrist_3_joint" value="-0.11" />
     </group_state>
+    
     <!--DISABLE COLLISIONS: By default it is assumed that any link of the robot could potentially come into collision with any other link in the robot. This tag disables collision checking between a specified pair of links. -->
-    <disable_collisions link1="base_footprint" link2="cabinet_link" reason="Adjacent"/>
-    <disable_collisions link1="base_footprint" link2="lidar_1_link" reason="Adjacent"/>
-    <disable_collisions link1="base_footprint" link2="lidar_2_link" reason="Adjacent"/>
-    <disable_collisions link1="base_footprint" link2="mpo_700_caster_back_left_link" reason="Adjacent"/>
-    <disable_collisions link1="base_footprint" link2="mpo_700_caster_back_right_link" reason="Adjacent"/>
-    <disable_collisions link1="base_footprint" link2="mpo_700_caster_front_left_link" reason="Adjacent"/>
-    <disable_collisions link1="base_footprint" link2="mpo_700_caster_front_right_link" reason="Adjacent"/>
-    <disable_collisions link1="base_footprint" link2="mpo_700_wheel_back_left_link" reason="Never"/>
-    <disable_collisions link1="base_footprint" link2="mpo_700_wheel_back_right_link" reason="Never"/>
-    <disable_collisions link1="base_footprint" link2="mpo_700_wheel_front_left_link" reason="Never"/>
-    <disable_collisions link1="base_footprint" link2="mpo_700_wheel_front_right_link" reason="Never"/>
-    <disable_collisions link1="base_footprint" link2="${prefix_value}base_link_inertia" reason="Never"/>
-    <disable_collisions link1="base_footprint" link2="${prefix_value}shoulder_link" reason="Never"/>
+    <disable_collisions link1="base_link" link2="cabinet_link" reason="Adjacent"/>
+    <disable_collisions link1="base_link" link2="lidar_1_link" reason="Adjacent"/>
+    <disable_collisions link1="base_link" link2="lidar_2_link" reason="Adjacent"/>
+    <disable_collisions link1="base_link" link2="docking_adapter_link" reason="Adjacent"/>
+    <disable_collisions link1="base_link" link2="mpo_700_caster_back_left_link" reason="Adjacent"/>
+    <disable_collisions link1="base_link" link2="mpo_700_caster_back_right_link" reason="Adjacent"/>
+    <disable_collisions link1="base_link" link2="mpo_700_caster_front_left_link" reason="Adjacent"/>
+    <disable_collisions link1="base_link" link2="mpo_700_caster_front_right_link" reason="Adjacent"/>
+    <disable_collisions link1="base_link" link2="mpo_700_wheel_back_left_link" reason="Never"/>
+    <disable_collisions link1="base_link" link2="mpo_700_wheel_back_right_link" reason="Never"/>
+    <disable_collisions link1="base_link" link2="mpo_700_wheel_front_left_link" reason="Never"/>
+    <disable_collisions link1="base_link" link2="mpo_700_wheel_front_right_link" reason="Never"/>
+    <disable_collisions link1="base_link" link2="${prefix_value}base_link_inertia" reason="Never"/>
+    <disable_collisions link1="base_link" link2="${prefix_value}base_link" reason="Never"/>
+    <disable_collisions link1="base_link" link2="${prefix_value}shoulder_link" reason="Never"/>
+    
     <disable_collisions link1="cabinet_link" link2="lidar_1_link" reason="Adjacent"/>
     <disable_collisions link1="cabinet_link" link2="lidar_2_link" reason="Adjacent"/>
     <disable_collisions link1="cabinet_link" link2="mpo_700_caster_back_left_link" reason="Never"/>
@@ -64,6 +68,21 @@
     <disable_collisions link1="cabinet_link" link2="mpo_700_wheel_front_right_link" reason="Never"/>
     <disable_collisions link1="cabinet_link" link2="${prefix_value}base_link_inertia" reason="Adjacent"/>
     <disable_collisions link1="cabinet_link" link2="${prefix_value}shoulder_link" reason="Never"/>
+
+    <disable_collisions link1="docking_adapter_link" link2="lidar_1_link" reason="Never"/>
+    <disable_collisions link1="docking_adapter_link" link2="lidar_2_link" reason="Never"/>
+    <disable_collisions link1="docking_adapter_link" link2="mpo_700_caster_back_left_link" reason="Never"/>
+    <disable_collisions link1="docking_adapter_link" link2="mpo_700_caster_back_right_link" reason="Never"/>
+    <disable_collisions link1="docking_adapter_link" link2="mpo_700_caster_front_left_link" reason="Never"/>
+    <disable_collisions link1="docking_adapter_link" link2="mpo_700_caster_front_right_link" reason="Never"/>
+    <disable_collisions link1="docking_adapter_link" link2="mpo_700_wheel_back_left_link" reason="Never"/>
+    <disable_collisions link1="docking_adapter_link" link2="mpo_700_wheel_back_right_link" reason="Never"/>
+    <disable_collisions link1="docking_adapter_link" link2="mpo_700_wheel_front_left_link" reason="Never"/>
+    <disable_collisions link1="docking_adapter_link" link2="mpo_700_wheel_front_right_link" reason="Never"/>
+    <disable_collisions link1="docking_adapter_link" link2="ur10base_link_inertia" reason="Never"/>
+    <disable_collisions link1="docking_adapter_link" link2="ur10shoulder_link" reason="Never"/>
+    <disable_collisions link1="docking_adapter_link" link2="ur10upper_arm_link" reason="Never"/>
+
     <disable_collisions link1="lidar_1_link" link2="lidar_2_link" reason="Adjacent"/>
     <disable_collisions link1="lidar_1_link" link2="mpo_700_caster_back_left_link" reason="Never"/>
     <disable_collisions link1="lidar_1_link" link2="mpo_700_caster_back_right_link" reason="Never"/>
