@@ -1,7 +1,7 @@
 controller_names:
   - scaled_joint_trajectory_controller
   - joint_trajectory_controller
-
+  - robotiq_gripper
 
 scaled_joint_trajectory_controller:
   action_ns: follow_joint_trajectory
@@ -15,7 +15,6 @@ scaled_joint_trajectory_controller:
     - $(var prefix)wrist_2_joint
     - $(var prefix)wrist_3_joint
 
-
 joint_trajectory_controller:
   action_ns: follow_joint_trajectory
   type: FollowJointTrajectory
@@ -27,3 +26,10 @@ joint_trajectory_controller:
     - $(var prefix)wrist_1_joint
     - $(var prefix)wrist_2_joint
     - $(var prefix)wrist_3_joint
+
+robotiq_gripper:
+  action_ns: robotiq_gripper_controller/gripper_cmd
+  type: GripperCommand
+  default: true
+  joints:
+    - finger_joint
