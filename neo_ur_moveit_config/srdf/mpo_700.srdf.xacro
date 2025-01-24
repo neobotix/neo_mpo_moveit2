@@ -150,8 +150,15 @@
 
     <!-- Assigning Xacro properties -->
     <xacro:unless value="${gripper == ''}">
-      <xacro:include filename="$(find neo_ur_moveit_config)/srdf/robotiq_2f_140.xacro" />
-      <xacro:robotiq_2f_140 />
+      <xacro:if value="${gripper == '2f_140'}">
+        <xacro:include filename="$(find neo_ur_moveit_config)/srdf/robotiq_2f_140.xacro" />
+        <xacro:robotiq_2f_140 />
+      </xacro:if>
+
+      <xacro:if value="${gripper == 'epick'}">
+        <xacro:include filename="$(find neo_ur_moveit_config)/srdf/robotiq_epick.xacro" />
+        <xacro:robotiq_epick />
+      </xacro:if>
     </xacro:unless>
 
 </robot>
