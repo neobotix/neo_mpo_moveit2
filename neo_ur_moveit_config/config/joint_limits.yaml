@@ -5,6 +5,11 @@
 # cases. For specific applications, higher values might lead to better execution performance.
 
 joint_limits:
+  finger_joint:
+    has_velocity_limits: true
+    max_velocity: 2.0
+    has_acceleration_limits: false
+    max_acceleration: 0.0
   $(var prefix)shoulder_pan_joint:
     has_acceleration_limits: true
     max_acceleration: 5.0
