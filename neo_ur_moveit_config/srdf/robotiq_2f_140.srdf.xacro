@@ -22,7 +22,7 @@
       <joint name="finger_joint" value="0.0" />
     </group_state>
     <group_state name="close" group="gripper">
-      <joint name="finger_joint" value="0.7" />
+      <joint name="finger_joint" value="0.695" />
     </group_state>
 
     <end_effector name="endeffector" parent_link="${prefix_value}wrist_3_link" group="gripper"/>

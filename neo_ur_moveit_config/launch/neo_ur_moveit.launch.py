@@ -26,8 +26,7 @@
 # ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 # POSSIBILITY OF SUCH DAMAGE.
 
-#
-# Author: Denis Stogl
+# Contributor: Pradheep Padmanabhan, Adarsh Karan K P
 
 import os
 
@@ -40,138 +39,111 @@ from launch_ros.actions import Node
 from launch_ros.substitutions import FindPackageShare
 from ament_index_python.packages import get_package_share_directory
 from launch_ros.descriptions import ParameterValue, ParameterFile
-
+from moveit_configs_utils import MoveItConfigsBuilder
+from pathlib import Path
 from neo_ur_moveit_config.launch_common import load_yaml
+from launch.event_handlers import OnProcessExit
+from launch.actions import RegisterEventHandler
 
 def launch_setup(context, *args, **kwargs):
 
     # Initialize Arguments
-    ur_type = LaunchConfiguration("ur_type")
-    my_robot = LaunchConfiguration("my_robot")
-    use_fake_hardware = LaunchConfiguration("use_fake_hardware")
-    gripper_type = LaunchConfiguration("gripper")
+    robot_typ = LaunchConfiguration("robot_type")
+    arm_type = LaunchConfiguration("arm_type")
+    gripper_type = LaunchConfiguration("gripper_type")
 
     # General arguments
-    moveit_joint_limits_file = LaunchConfiguration("moveit_joint_limits_file")
     moveit_config_package = LaunchConfiguration("moveit_config_package")
-    moveit_config_file = LaunchConfiguration("moveit_config_file")
     prefix = LaunchConfiguration("prefix")
     use_sim_time = LaunchConfiguration("use_sim_time")
     launch_rviz = LaunchConfiguration("launch_rviz")
-    use_gazebo = LaunchConfiguration("use_gazebo")
-   
-    gazebo_controllers = context.perform_substitution(use_gazebo)
-    if (gazebo_controllers == True):
-        urdf = os.path.join(get_package_share_directory("neo_simulation2"),
-            'robots', 
-            str(my_robot.perform(context)), 
-            str(my_robot.perform(context)) + '.urdf.xacro')
-    else:
-        urdf = os.path.join(get_package_share_directory('neo_mpo_700-2'),
-            'robot_model/mpo_700',
-            'mpo_700.urdf.xacro')
+    use_gz = LaunchConfiguration("use_gz")
+    simulation_enabled = context.perform_substitution(LaunchConfiguration("use_gz")).lower()
 
-    robot_description_content = Command([
-        "xacro", " ", urdf, " ", 
-        'arm_type:=', ur_type, " ",
-        'use_gazebo:=', gazebo_controllers, " ",
-        'gripper_type:=', gripper_type.perform(context), " ",
-        'robot_prefix:=', my_robot,
-        ])
+    if simulation_enabled == "true":
+        use_sim_time = True
 
-    robot_description = {"robot_description": robot_description_content}
+    robot_description_pkg = get_package_share_directory('neo_mpo_700-2')
+    moveit_config_pkg = get_package_share_directory(moveit_config_package.perform(context))
+    # Mapping of robot types to their respective package names
+    robot_type_packages = {
+        'mpo_700': 'neo_mpo_700-2',
+        'mpo_500': 'neo_mpo_500-2',
+    }
 
+    # Checking if the user has selected a robot that is valid
+    if robot_typ not in robot_type_packages:
+        # Incase of an invalid selection
+        print("Invalid option, setting mpo_700 by default")
+        robot_typ = "mpo_700"
+
+    # Get the robot-specific package if it exists
+    robot_description_pkg = get_package_share_directory(robot_type_packages[robot_typ])
+    
+    # Getting the robot description xacro
+    urdf = os.path.join(robot_description_pkg, 'robot_model', f'{robot_typ}.urdf.xacro')
+    
     # MoveIt Configuration
-    srdf = os.path.join(get_package_share_directory(str(moveit_config_package.perform(context))),
-        'srdf',
-        str(my_robot.perform(context)) + '.srdf.xacro'
+    srdf = os.path.join(
+        moveit_config_pkg,
+        "srdf",
+        f"{robot_typ}.srdf.xacro"
     )
 
-    robot_description_semantic_content = ParameterValue(
-        Command([
-            "xacro", " ", srdf, " ", 'prefix:=',
-            prefix, " ", 'gripper_type:=',
-            gripper_type
-            ]),
-        value_type=str)
-
-    robot_description_semantic = {"robot_description_semantic": robot_description_semantic_content} 
-
-    robot_description_kinematics = PathJoinSubstitution(
-        [FindPackageShare(moveit_config_package), "config", "kinematics.yaml"]
-    )
-    joint_limits_yaml =os.path.join(
-        get_package_share_directory(str(moveit_config_package.perform(context))),
-        "config",
-        str(moveit_joint_limits_file.perform(context))
-    )
-
-    joint_limits_yaml_with_substitutions = ParameterFile(joint_limits_yaml, allow_substs=True)
-    # Evaluate the parameter file to apply dynamic substitutions
-    joint_limits_yaml_with_substitutions.evaluate(context)
-    # Load the YAML file with the applied substitutions
-    robot_description_planning = {
-        "robot_description_planning": load_yaml(
-            str(moveit_config_package.perform(context)),
-            os.path.join("config", 
-                        str(joint_limits_yaml_with_substitutions.param_file))
-        )
-    }
-
-    # Planning Configuration
-    ompl_planning_pipeline_config = {
-        "move_group": {
-            "planning_plugin": "ompl_interface/OMPLPlanner",
-            "request_adapters": """default_planner_request_adapters/AddTimeOptimalParameterization 
-            default_planner_request_adapters/FixWorkspaceBounds default_planner_request_adapters/FixStartStateBounds 
-            default_planner_request_adapters/FixStartStateCollision default_planner_request_adapters/FixStartStatePathConstraints""",
-            "start_state_max_bounds_error": 0.1
-        }
-    }
-    ompl_planning_yaml = load_yaml(str(moveit_config_package.perform(context)), "config/ompl_planning.yaml")
-    ompl_planning_pipeline_config["move_group"].update(ompl_planning_yaml)
-
-    # Trajectory Execution Configuration
+    # Controllers Configuration
     controllers_yaml = os.path.join(
-        get_package_share_directory(str(moveit_config_package.perform(context))),
+        moveit_config_pkg,
         "config",
-        "controllers.yaml",
+        "moveit_controllers.yaml",
     )
-
     controllers_yaml_with_substitutions = ParameterFile(controllers_yaml, allow_substs=True)
     # Evaluate the parameter file to apply dynamic substitutions
     controllers_yaml_with_substitutions.evaluate(context)
-    # Load the YAML file with the applied substitutions    
-    controllers_yaml_with_substitutions = load_yaml(
-        str(moveit_config_package.perform(context)),
-        os.path.join("config", 
-                    str(controllers_yaml_with_substitutions.param_file)),
+    
+    # Load the controllers YAML
+    controllers_yaml_dict = load_yaml(
+        "neo_ur_moveit_config",
+        str(controllers_yaml_with_substitutions.param_file)
     )
-    # the scaled_joint_trajectory_controller does not work on fake hardware
-    if gazebo_controllers == "true":
-        controllers_yaml_with_substitutions["scaled_joint_trajectory_controller"]["default"] = False
-        controllers_yaml_with_substitutions["joint_trajectory_controller"]["default"] = True
 
-    moveit_controllers = {
-        "moveit_simple_controller_manager": controllers_yaml_with_substitutions,
-        "moveit_controller_manager": "moveit_simple_controller_manager/MoveItSimpleControllerManager",
-    }
+    # The scaled_joint_trajectory_controller does not work on mock hardware
+    use_mock_hardware = context.perform_substitution(LaunchConfiguration("use_mock_hardware")).lower()
+    if use_mock_hardware == "true" or simulation_enabled == "true":
+        controllers_yaml_dict["moveit_simple_controller_manager"]["scaled_joint_trajectory_controller"]["default"] = False
+        controllers_yaml_dict["moveit_simple_controller_manager"]["joint_trajectory_controller"]["default"] = True
 
-    trajectory_execution = {
-        "moveit_manage_controllers": False,
-        "trajectory_execution.allowed_execution_duration_scaling": 1.2,
-        "trajectory_execution.allowed_goal_duration_margin": 0.5,
-        "trajectory_execution.allowed_start_tolerance": 0.01,
-    }
+    # Joint Limits Configuration
+    joint_limits_yaml = os.path.join(
+        moveit_config_pkg,
+        "config",
+        "joint_limits.yaml",
+    )
+    joint_limits_yaml_with_substitutions = ParameterFile(joint_limits_yaml, allow_substs=True)
+    # Evaluate the parameter file to apply dynamic substitutions
+    joint_limits_yaml_with_substitutions.evaluate(context)
+    joint_limits_yaml = os.path.join(
+        moveit_config_pkg,
+        "config",
+        str(joint_limits_yaml_with_substitutions.param_file)
+    )
 
-    planning_scene_monitor_parameters = {
-        "publish_planning_scene": True,
-        "publish_geometry_updates": True,
-        "publish_state_updates": True,
-        "publish_transforms_updates": True,
-        "publish_robot_description":True,
-        "publish_robot_description_semantic":True,
-    }
+    moveit_config = (
+        MoveItConfigsBuilder(robot_name=f"{robot_typ}", package_name="neo_ur_moveit_config")
+        .robot_description_semantic(file_path=srdf, mappings={
+            "prefix": prefix,
+            "gripper_type": gripper_type,
+            })
+        .robot_description(file_path=urdf, mappings={
+            "use_gz": use_gz,
+            "arm_type": arm_type,
+            "gripper_type": gripper_type,
+            "force_abs_paths": use_gz
+            })
+        .joint_limits(file_path=joint_limits_yaml)
+        .to_moveit_configs()
+    )
+    # Override the trajectory_execution with the modified dictionary
+    moveit_config.trajectory_execution = controllers_yaml_dict
 
     # Start the actual move_group node/action server
     move_group_node = Node(
@@ -179,14 +151,7 @@ def launch_setup(context, *args, **kwargs):
         executable="move_group",
         output="screen",
         parameters=[
-            robot_description,
-            robot_description_semantic,
-            robot_description_kinematics,
-            robot_description_planning,
-            ompl_planning_pipeline_config,
-            trajectory_execution,
-            moveit_controllers,
-            planning_scene_monitor_parameters,
+            moveit_config.to_dict(),
             {"use_sim_time": use_sim_time},
         ],
     )
@@ -203,100 +168,105 @@ def launch_setup(context, *args, **kwargs):
         output="log",
         arguments=["-d", rviz_config_file],
         parameters=[
-            robot_description,
-            robot_description_semantic,
-            ompl_planning_pipeline_config,
-            robot_description_kinematics,
-            # robot_description_planning,
+            moveit_config.robot_description,
+            moveit_config.robot_description_semantic,
+            moveit_config.robot_description_kinematics,
+            moveit_config.planning_pipelines,
+            moveit_config.joint_limits,
+            {
+                "use_sim_time": use_sim_time,
+            },
         ],
     )
 
-    nodes_to_start = [move_group_node, rviz_node]
+    wait_robot_description = Node(
+        package="ur_robot_driver",
+        executable="wait_for_robot_description",
+        output="screen",
+    )
+
+    handler = RegisterEventHandler(
+        OnProcessExit(
+            target_action=wait_robot_description,
+            on_exit=[move_group_node, rviz_node],
+        )
+    )
+
+    nodes_to_start = [wait_robot_description, handler]
 
     return nodes_to_start
-
 
 def generate_launch_description():
 
     declared_arguments = []
-    # UR specific arguments
+
     declared_arguments.append(
-        DeclareLaunchArgument(
-            "ur_type",
-            description="Type/series of used UR robot.",
-            choices=["ur3", "ur3e", "ur5", "ur5e", "ur10", "ur10e", "ur16e", "ur20"],
-        )
-    )
-    declared_arguments.append(
-        DeclareLaunchArgument(
-            'my_robot', 
+            DeclareLaunchArgument(
+            'robot_type',
             default_value='mpo_700',
-            description='Neobotix Robot Types: "mpo_700", "mpo_500"'
+            choices=['', 'mpo_700', 'mpo_500', 'mp_400', 'mp_500'],
+            description='Robot Types\n\t'
         )
     )
     declared_arguments.append(
         DeclareLaunchArgument(
-            'gripper', 
-            default_value='',
-            description='Gripper if needed. For now, just Robotiq gripper: 2f_140'
+            'arm_type', default_value='',
+            choices=['', 'ur5', 'ur10', 'ur5e', 'ur10e', 'ec66', 'cs66'],
+            description='Arm Types - Supported Robots [mpo-700, mpo-500]\n\t'        
         )
     )
     declared_arguments.append(
         DeclareLaunchArgument(
-            "use_fake_hardware",
-            default_value="false",
-            description="Indicate whether robot is running with fake hardware mirroring command to its states.",
+            'gripper_type', default_value='',
+            choices=['', '2f_140', '2f_85', 'epick'],
+            description='Gripper Types - Supported Robots [mpo-700, mpo-500]\n\t'
         )
     )
-    # General arguments
     declared_arguments.append(
         DeclareLaunchArgument(
             "moveit_config_package",
             default_value="neo_ur_moveit_config",
-            description="MoveIt config package with robot SRDF/XACRO files. Usually the argument \
-        is not set, it enables use of a custom moveit config.",
-        )
-    )
-    declared_arguments.append(
-        DeclareLaunchArgument(
-            "moveit_config_file",
-            default_value="ur.srdf.xacro",
-            description="MoveIt SRDF/XACRO description file with the robot.",
-        )
-    )
-    declared_arguments.append(
-        DeclareLaunchArgument(
-            "moveit_joint_limits_file",
-            default_value="joint_limits.yaml",
-            description="MoveIt joint limits that augment or override the values from the URDF robot_description.",
+            description='MoveIt config package with robot SRDF/XACRO files. Usually the argument\n'
+            '\t is not set, it enables use of a custom moveit config.',
         )
     )
     declared_arguments.append(
         DeclareLaunchArgument(
             "use_sim_time",
             default_value="false",
-            description="Make MoveIt to use simulation time. This is needed for the trajectory planing in simulation.",
+            description='Make MoveIt to use simulation time.\n'
+              '\t This is needed for the trajectory planing in simulation.',
         )
     )
+
     declared_arguments.append(
         DeclareLaunchArgument(
             "prefix",
-            default_value='""',
-            description="Prefix of the joint names, useful for \
-        multi-robot setup. If changed than also joint names in the controllers' configuration \
-        have to be updated.",
+            default_value='',
+            description='Prefix of the joint names. If changed,\n'
+            '\t the joint names in the controllers\n'
+            '\t configuration must also be updated.',
         )
     )
+
     declared_arguments.append(
-        DeclareLaunchArgument("launch_rviz",
-        default_value="true",
-        description="Launch RViz?")
+        DeclareLaunchArgument(
+            "use_gz",
+            default_value="false",
+            description="Whether to enable Gazebo simulation.",
+        )
     )
+
     declared_arguments.append(
-        DeclareLaunchArgument("use_gazebo",
-        default_value="false",
-        description="Using Gazebo?")
+        DeclareLaunchArgument(
+            "use_mock_hardware",
+            default_value="false",
+            description="Indicate whether robot is running with mock hardware mirroring command to its states.",
+        )
+    )
+
+    declared_arguments.append(
+        DeclareLaunchArgument("launch_rviz", default_value="true", description="Launch RViz?")
     )
 
     return LaunchDescription(declared_arguments + [OpaqueFunction(function=launch_setup)])
-
