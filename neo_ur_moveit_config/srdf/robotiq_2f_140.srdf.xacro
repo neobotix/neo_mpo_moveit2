@@ -8,7 +8,7 @@
   <xacro:macro name="robotiq_2f_140">
     <!--PASSIVE JOINT: Purpose: this element is used to mark joints that are not actuated-->
 
-    <group name="gripper">
+    <!-- <group name="gripper">
       <joint name="finger_joint"/>
     </group>
 
@@ -23,9 +23,9 @@
     </group_state>
     <group_state name="close" group="gripper">
       <joint name="finger_joint" value="0.695" />
-    </group_state>
+    </group_state> -->
 
-    <end_effector name="endeffector" parent_link="${prefix_value}wrist_3_link" group="gripper"/>
+    <!-- <end_effector name="endeffector" parent_link="${prefix_value}wrist_3_link" group="gripper"/> -->
 
     <disable_collisions link1="left_inner_finger" link2="ur_to_robotiq_link" reason="Never"/>
     <disable_collisions link1="left_inner_finger_pad" link2="ur_to_robotiq_link" reason="Never"/>
