@@ -48,7 +48,7 @@ from launch.actions import RegisterEventHandler
 def launch_setup(context, *args, **kwargs):
 
     # Initialize Arguments
-    robot_typ = LaunchConfiguration("robot_type")
+    robot_typ = str(context.perform_substitution(LaunchConfiguration("robot_type")))
     arm_type = LaunchConfiguration("arm_type")
     gripper_type = LaunchConfiguration("gripper_type")
 
@@ -204,7 +204,7 @@ def generate_launch_description():
             DeclareLaunchArgument(
             'robot_type',
             default_value='mpo_700',
-            choices=['', 'mpo_700', 'mpo_500', 'mp_400', 'mp_500'],
+            choices=['', 'mpo_700', 'mpo_500'],
             description='Robot Types\n\t'
         )
     )
