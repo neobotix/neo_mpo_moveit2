@@ -155,6 +155,11 @@
         <xacro:robotiq_2f_140 />
       </xacro:if>
 
+      <xacro:if value="${gripper == '2f_85'}">
+        <xacro:include filename="$(find neo_ur_moveit_config)/srdf/robotiq_2f_85.srdf.xacro" />
+        <xacro:robotiq_2f_85 />
+      </xacro:if>
+
       <xacro:if value="${gripper == 'epick'}">
         <xacro:include filename="$(find neo_ur_moveit_config)/srdf/robotiq_epick.xacro" />
         <xacro:robotiq_epick />
