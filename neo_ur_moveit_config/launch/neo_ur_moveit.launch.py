@@ -243,9 +243,8 @@ def generate_launch_description():
         DeclareLaunchArgument(
             "prefix",
             default_value='',
-            description='Prefix of the joint names. If changed,\n'
-            '\t the joint names in the controllers\n'
-            '\t configuration must also be updated.',
+            description='Prefix of the joint names in controllers configuration.\n'
+            '\t (same as "arm_type" argument)',
         )
     )
 
