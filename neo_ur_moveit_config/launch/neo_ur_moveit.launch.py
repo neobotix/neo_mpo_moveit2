@@ -31,19 +31,17 @@
 import os
 
 from launch import LaunchDescription
-from launch.actions import DeclareLaunchArgument
-from launch.actions import OpaqueFunction
+from launch.actions import DeclareLaunchArgument, OpaqueFunction, RegisterEventHandler
 from launch.conditions import IfCondition
-from launch.substitutions import Command, FindExecutable, LaunchConfiguration, PathJoinSubstitution
+from launch.substitutions import LaunchConfiguration, PathJoinSubstitution
 from launch_ros.actions import Node
 from launch_ros.substitutions import FindPackageShare
 from ament_index_python.packages import get_package_share_directory
-from launch_ros.descriptions import ParameterValue, ParameterFile
+from launch_ros.descriptions import ParameterFile
 from moveit_configs_utils import MoveItConfigsBuilder
 from pathlib import Path
 from neo_ur_moveit_config.launch_common import load_yaml
 from launch.event_handlers import OnProcessExit
-from launch.actions import RegisterEventHandler
 
 def launch_setup(context, *args, **kwargs):
 
@@ -58,6 +56,7 @@ def launch_setup(context, *args, **kwargs):
     use_sim_time = LaunchConfiguration("use_sim_time")
     launch_rviz = LaunchConfiguration("launch_rviz")
     use_gz = LaunchConfiguration("use_gz")
+    use_mock = LaunchConfiguration("use_mock_hardware")
     simulation_enabled = context.perform_substitution(LaunchConfiguration("use_gz")).lower()
 
     if simulation_enabled == "true":
@@ -137,7 +136,9 @@ def launch_setup(context, *args, **kwargs):
             "use_gz": use_gz,
             "arm_type": arm_type,
             "gripper_type": gripper_type,
-            "force_abs_paths": use_gz
+            "force_abs_paths": use_gz,
+            "use_mock_hardware": use_mock,
+            "mock_sensor_commands": use_mock,
             })
         .joint_limits(file_path=joint_limits_yaml)
         .to_moveit_configs()
@@ -208,6 +209,7 @@ def generate_launch_description():
             description='Robot Types\n\t'
         )
     )
+
     declared_arguments.append(
         DeclareLaunchArgument(
             'arm_type', default_value='',
@@ -215,6 +217,7 @@ def generate_launch_description():
             description='Arm Types - Supported Robots [mpo-700, mpo-500]\n\t'        
         )
     )
+
     declared_arguments.append(
         DeclareLaunchArgument(
             'gripper_type', default_value='',
@@ -222,6 +225,7 @@ def generate_launch_description():
             description='Gripper Types - Supported Robots [mpo-700, mpo-500]\n\t'
         )
     )
+
     declared_arguments.append(
         DeclareLaunchArgument(
             "moveit_config_package",
@@ -230,6 +234,7 @@ def generate_launch_description():
             '\t is not set, it enables use of a custom moveit config.',
         )
     )
+
     declared_arguments.append(
         DeclareLaunchArgument(
             "use_sim_time",
