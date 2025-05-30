@@ -143,8 +143,6 @@ def launch_setup(context, *args, **kwargs):
         .joint_limits(file_path=joint_limits_yaml)
         .to_moveit_configs()
     )
-    # Override the trajectory_execution with the modified dictionary
-    moveit_config.trajectory_execution = controllers_yaml_dict
 
     # Start the actual move_group node/action server
     move_group_node = Node(
