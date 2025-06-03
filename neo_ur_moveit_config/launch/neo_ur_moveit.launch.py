@@ -48,6 +48,7 @@ def launch_setup(context, *args, **kwargs):
     # Initialize Arguments
     robot_typ = str(context.perform_substitution(LaunchConfiguration("robot_type")))
     arm_type = LaunchConfiguration("arm_type")
+    ur_dc = LaunchConfiguration("use_ur_dc")
     gripper_type = LaunchConfiguration("gripper_type")
 
     # General arguments
@@ -135,6 +136,7 @@ def launch_setup(context, *args, **kwargs):
         .robot_description(file_path=urdf, mappings={
             "use_gz": use_gz,
             "arm_type": arm_type,
+            "use_ur_dc": ur_dc,
             "gripper_type": gripper_type,
             "force_abs_paths": use_gz,
             "use_mock_hardware": use_mock,
@@ -218,6 +220,13 @@ def generate_launch_description():
 
     declared_arguments.append(
         DeclareLaunchArgument(
+            'use_ur_dc', default_value='False',
+            description='Set this argument to True if you have an UR arm with DC variant'
+        )
+    )
+
+    declared_arguments.append(
+        DeclareLaunchArgument(
             'gripper_type', default_value='',
             choices=['', '2f_140', '2f_85', 'epick'],
             description='Gripper Types - Supported Robots [mpo-700, mpo-500]\n\t'
@@ -236,7 +245,7 @@ def generate_launch_description():
     declared_arguments.append(
         DeclareLaunchArgument(
             "use_sim_time",
-            default_value="false",
+            default_value="False",
             description='Make MoveIt to use simulation time.\n'
               '\t This is needed for the trajectory planing in simulation.',
         )
@@ -254,7 +263,7 @@ def generate_launch_description():
     declared_arguments.append(
         DeclareLaunchArgument(
             "use_gz",
-            default_value="false",
+            default_value="False",
             description="Whether to enable Gazebo simulation.",
         )
     )
@@ -262,13 +271,13 @@ def generate_launch_description():
     declared_arguments.append(
         DeclareLaunchArgument(
             "use_mock_hardware",
-            default_value="false",
+            default_value="False",
             description="Indicate whether robot is running with mock hardware mirroring command to its states.",
         )
     )
 
     declared_arguments.append(
-        DeclareLaunchArgument("launch_rviz", default_value="true", description="Launch RViz?")
+        DeclareLaunchArgument("launch_rviz", default_value="True", description="Launch RViz?")
     )
 
     return LaunchDescription(declared_arguments + [OpaqueFunction(function=launch_setup)])
