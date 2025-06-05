@@ -26,6 +26,8 @@
   <exec_depend>urdf</exec_depend>
   <exec_depend>warehouse_ros_sqlite</exec_depend>
   <exec_depend>xacro</exec_depend>
+  <exec_depend>neo_mpo_700-2</exec_depend>
+  <exec_depend>neo_mpo_500-2</exec_depend>
 
   <export>
     <build_type>ament_cmake</build_type>
