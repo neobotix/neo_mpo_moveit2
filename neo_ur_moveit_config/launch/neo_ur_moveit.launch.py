@@ -146,6 +146,8 @@ def launch_setup(context, *args, **kwargs):
         .to_moveit_configs()
     )
 
+    moveit_config.trajectory_execution = controllers_yaml_dict
+
     # Start the actual move_group node/action server
     move_group_node = Node(
         package="moveit_ros_move_group",
